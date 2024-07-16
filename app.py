@@ -32,6 +32,11 @@ def find_duplicates(df, column):
     unique_df = df.drop_duplicates(subset=[column])
     return duplicates, unique_df
 
+def segment_csv(df, rows_per_segment):
+    # Segment the DataFrame by the specified number of rows
+    segments = [df[i:i + rows_per_segment] for i in range(0, len(df), rows_per_segment)]
+    return segments
+
 def main():
     st.title('CSV Filter based on Mobile Numbers')
 
@@ -90,6 +95,34 @@ def main():
                 # Download the filtered data
                 csv = unique_df.to_csv(index=False)
                 st.download_button(label="Download Filtered CSV", data=csv, mime='text/csv')
+    
+    st.title('CSV Segmenter')
+
+    st.write("Upload a CSV file and specify the number of rows for each segment.")
+
+    # File upload
+    file = st.file_uploader("Upload the CSV file for segmenting", type="csv")
+
+    if file:
+        df = pd.read_csv(file)
+
+        if df is not None:
+            # Input for the number of rows per segment
+            rows_per_segment = st.number_input("Enter the number of rows per segment", min_value=1, value=10)
+
+            if st.button('Segment CSV'):
+                segments = segment_csv(df, rows_per_segment)
+                
+                st.write(f"Total segments created: {len(segments)}")
+
+                for idx, segment in enumerate(segments):
+                    st.write(f"Segment {idx + 1}")
+                    st.dataframe(segment)
+
+                    # Provide download button for each segment
+                    csv = segment.to_csv(index=False)
+                    st.download_button(label=f"Download Segment {idx + 1}", data=csv, mime='text/csv', file_name=f'segment_{idx + 1}.csv')
+
 
 if __name__ == "__main__":
     main()
